@@ -1,40 +1,40 @@
-whitelist_rules:
+opt_in_rules:
+  - closure_end_indentation
   - closure_spacing
-  - colon
-  - empty_enum_arguments
-  - fatal_error_message
-  - force_cast
-  - force_try
+  - contains_over_first_not_nil
+  - empty_string
+  - first_where
   - force_unwrapping
   - implicitly_unwrapped_optional
-  - legacy_cggeometry_functions
-  - legacy_constant
-  - legacy_constructor
-  - legacy_nsgeometry_functions
   - operator_usage_whitespace
-  - redundant_string_enum_value
-  - redundant_void_return
-  - return_arrow_whitespace
-  - trailing_newline
-  - type_name
-  - unused_closure_parameter
-  - unused_optional_binding
-  - vertical_whitespace
+  - overridden_super_call
+  - sorted_imports
+disabled_rules:
+  - closure_parameter_position
+  - identifier_name
+  - nesting
+  - todo
+  - trailing_comma
   - void_return
-  - custom_rules
-
+included:
+  - Helios
 excluded:
-  - Carthage
+  - Helios/extensions/UIFont+BNI.swift
+  - Helios/modules/entitlements/generated
+  - Helios/modules/entitlements/stencils
+  - Helios/modules/entitlements/queries
+  - HeliosTests
+  - Olympus-GraphQL
   - Pods
+  - Swagger
 
-colon:
-  apply_to_dictionaries: false
-
-indentation: 2
-
-custom_rules:
-  no_objcMembers:
-    name: "@objcMembers"
-    regex: "@objcMembers"
-    message: "Explicitly use @objc on each member you want to expose to Objective-C"
-    severity: error
+file_length: 800
+function_body_length: 120
+function_parameter_count: 6
+large_tuple: 3
+type_body_length:
+  warning: 400
+  error: 800
+type_name:
+  min_length: 2
+  max_length: 50
