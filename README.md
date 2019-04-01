@@ -39,7 +39,7 @@ Note that brevity is not a primary goal. Code should be made more concise only i
 
 _You can enable the following settings in Xcode by running [this script](resources/xcode_settings.bash), e.g. as part of a "Run Script" build phase._
 
-* <a id='column-width'></a>(<a href='#column-width'>link</a>) **Each line should have a maximum column width of 100 characters.**
+* <a id='column-width'></a>(<a href='#column-width'>link</a>) **Each line should have a maximum column width of 120 characters.**
 
   <details>
 
@@ -48,7 +48,7 @@ _You can enable the following settings in Xcode by running [this script](resourc
 
   </details>
 
-* <a id='spaces-over-tabs'></a>(<a href='#spaces-over-tabs'>link</a>) **Use 2 spaces to indent lines.**
+* <a id='spaces-over-tabs'></a>(<a href='#spaces-over-tabs'>link</a>) **Use 4 spaces to indent lines.**
 
 * <a id='trailing-whitespace'></a>(<a href='#trailing-whitespace'>link</a>) **Trim trailing whitespace in all lines.** [![SwiftFormat: trailingSpace](https://img.shields.io/badge/SwiftFormat-trailingSpace-7B0051.svg)](https://github.com/nicklockwood/SwiftFormat/blob/master/Rules.md#trailingSpace)
 
@@ -138,6 +138,7 @@ _You can enable the following settings in Xcode by running [this script](resourc
 
 * <a id='bool-names'></a>(<a href='#bool-names'>link</a>) **Name booleans like `isSpaceship`, `hasSpacesuit`, etc.** This makes it clear that they are booleans and not other types.
 
+<!-- TODO: Create a Swiftlint/format rule -->
 * <a id='capitalize-acronyms'></a>(<a href='#capitalize-acronyms'>link</a>) **Acronyms in names (e.g. `URL`) should be all-caps except when it’s the start of a name that would otherwise be lowerCamelCase, in which case it should be uniformly lower-cased.**
 
   <details>
@@ -272,6 +273,7 @@ _You can enable the following settings in Xcode by running [this script](resourc
 
 ## Style
 
+<!-- TODO: Create a Swiftlint/format rule -->
 * <a id='use-implicit-types'></a>(<a href='#use-implicit-types'>link</a>) **Don't include types where they can be easily inferred.**
 
   <details>
@@ -361,6 +363,7 @@ _You can enable the following settings in Xcode by running [this script](resourc
 
   </details>
 
+<!-- TODO: Create a Swiftlint/format rule -->
 * <a id='name-tuple-elements'></a>(<a href='#name-tuple-elements'>link</a>) **Name members of tuples for extra clarity.** Rule of thumb: if you've got more than 3 fields, you should probably be using a struct.
 
   <details>
@@ -665,8 +668,10 @@ _You can enable the following settings in Xcode by running [this script](resourc
 
   </details>
 
+<!-- FIXME: Reevaluate? -->
 * <a id='time-intensive-init'></a>(<a href='#time-intensive-init'>link</a>) **Avoid performing any meaningful or time-intensive work in `init()`.** Avoid doing things like opening database connections, making network requests, reading large amounts of data from disk, etc. Create something like a `start()` method if these things need to be done before an object is ready for use.
 
+<!-- TODO: Can this be lintable? Min lines in property observer? -->
 * <a id='complex-property-observers'></a>(<a href='#complex-property-observers'>link</a>) **Extract complex property observers into methods.** This reduces nestedness, separates side-effects from property declarations, and makes the usage of implicitly-passed parameters like `oldValue` explicit.
 
   <details>
@@ -703,6 +708,7 @@ _You can enable the following settings in Xcode by running [this script](resourc
 
   </details>
 
+<!-- TODO: Can this be lintable? Min lines in callback block? -->
 * <a id='complex-callback-block'></a>(<a href='#complex-callback-block'>link</a>) **Extract complex callback blocks into methods**. This limits the complexity introduced by weak-self in blocks and reduces nestedness. If you need to reference self in the method call, make use of `guard` to unwrap self for the duration of the callback.
 
   <details>
@@ -740,6 +746,7 @@ _You can enable the following settings in Xcode by running [this script](resourc
 
   </details>
 
+<!-- TODO: Lintable? -->
 * <a id='guards-at-top'></a>(<a href='#guards-at-top'>link</a>) **Prefer using `guard` at the beginning of a scope.**
 
   <details>
@@ -751,7 +758,10 @@ _You can enable the following settings in Xcode by running [this script](resourc
 
 * <a id='limit-access-control'></a>(<a href='#limit-access-control'>link</a>) **Access control should be at the strictest level possible.** Prefer `public` to `open` and `private` to `fileprivate` unless you need that behavior.
 
-* <a id='avoid-global-functions'></a>(<a href='#avoid-global-functions'>link</a>) **Avoid global functions whenever possible.** Prefer methods within type definitions.
+<!-- TODO: Lintable? -->
+* <a id='limit-access-control'></a>(<a href='#no-internals'>link</a>) **`internal` access control should not be explicit.** Prefer not using the keyword `internal` whenever possible.
+
+* <a id='avoid-global-functions'></a>(<a href='#avoid-global-functions'>link</a>) **Avoid global functions whenever possible.** Prefer methods within type definitions or extensions.
 
   <details>
 
@@ -781,26 +791,53 @@ _You can enable the following settings in Xcode by running [this script](resourc
 
   </details>
 
-* <a id='private-constants'></a>(<a href='#private-constants'>link</a>) **Prefer putting constants in the top level of a file if they are `private`.** If they are `public` or `internal`, define them as static properties, for namespacing purposes.
+* <a id='private-constants'></a>(<a href='#private-constants'>link</a>) **Prefer putting constants at the bottom of a file in an `extension`, nested inside a `struct Constants`.** Whenever possible, make the extension a `private extension` to avoid outside access.
 
   <details>
-
+  
   ```swift
-  private let privateValue = "secret"
+  public class SomeClass {
+      func doSomething() {
+          print(Constants.value)
+          print(Constants.something)
+      }
+  }
+  
+  private extension SomeClass {
+      struct Constants {
+          static let value = "something"
+          static let something = "value"
+      }
+  }
+  ```
 
+  To have both public and private constants in the same namespace, put them both in Constants, using the extension to define access control.
+  ```swift
   public class MyClass {
-
-    public static let publicValue = "something"
-
     func doSomething() {
-      print(privateValue)
-      print(MyClass.publicValue)
+      print(Constants.privateValue)
+      print(Constants.publicValue)
     }
+  }
+  
+  // MARK: - Public Constants
+
+  extension MyClass {
+      struct Constants {
+          static let publicValue = "something"
+      }
+  }
+  
+  // MARK: - Private Constants
+  
+  private extension MyClass.Constants {
+      static let privateValue = "secret"
   }
   ```
 
   </details>
 
+<!-- FIXME: Consider for Constants over `struct Constants` -->
 * <a id='namespace-using-enums'></a>(<a href='#namespace-using-enums'>link</a>) **Use caseless `enum`s for organizing `public` or `internal` constants and functions into namespaces.** Avoid creating non-namespaced global constants and functions. Feel free to nest namespaces where it adds clarity.
 
   <details>
@@ -822,6 +859,8 @@ _You can enable the following settings in Xcode by running [this script](resourc
   ```
 
   </details>
+  
+<!-- TODO: Prefer computed vars over having real values in rawValue? -->
 
 * <a id='auto-enum-values'></a>(<a href='#auto-enum-values'>link</a>) **Use Swift's automatic enum values unless they map to an external source.** Add a comment explaining why explicit values are defined. [![SwiftLint: redundant_string_enum_value](https://img.shields.io/badge/SwiftLint-redundant__string__enum__value-007A87.svg)](https://github.com/realm/SwiftLint/blob/master/Rules.md#redundant-string-enum-value)
 
@@ -898,7 +937,23 @@ _You can enable the following settings in Xcode by running [this script](resourc
 
   </details>
 
+<!-- TODO: Re-add? Don't really understand this though.
 * <a id='semantic-optionals'></a>(<a href='#semantic-optionals'>link</a>) **Use optionals only when they have semantic meaning.**
+-->
+
+<!-- 
+TODO: Add FRP stuff like:
+```swift
+func transform(_ int: Int) -> String { return "\(int)" }
+
+// WRONG
+[1, 2, 3].map { transform($0) }
+
+// RIGHT
+[1, 2, 3].map(transform)
+```
+?
+-->
 
 * <a id='prefer-immutable-values'></a>(<a href='#prefer-immutable-values'>link</a>) **Prefer immutable values whenever possible.** Use `map` and `compactMap` instead of appending to a new collection. Use `filter` instead of removing elements from a mutable collection.
 
@@ -934,6 +989,10 @@ _You can enable the following settings in Xcode by running [this script](resourc
 
   </details>
 
+<!-- TODO: DDAssertionFailure -->
+<!-- Not sure I agree with all of this -->
+<!-- guard over precondition? -->
+<!-- x ~= 0..<100 -->
 * <a id='preconditions-and-asserts'></a>(<a href='#preconditions-and-asserts'>link</a>) **Handle an unexpected but recoverable condition with an `assert` method combined with the appropriate logging in production. If the unexpected condition is not recoverable, prefer a `precondition` method or `fatalError()`.** This strikes a balance between crashing and providing insight into unexpected conditions in the wild. Only prefer `fatalError` over a `precondition` method when the failure message is dynamic, since a `precondition` method won't report the message in the crash report. [![SwiftLint: fatal_error_message](https://img.shields.io/badge/SwiftLint-fatal__error__message-007A87.svg)](https://github.com/realm/SwiftLint/blob/master/Rules.md#fatal-error-message) [![SwiftLint: force_cast](https://img.shields.io/badge/SwiftLint-force__cast-007A87.svg)](https://github.com/realm/SwiftLint/blob/master/Rules.md#force-cast) [![SwiftLint: force_try](https://img.shields.io/badge/SwiftLint-force__try-007A87.svg)](https://github.com/realm/SwiftLint/blob/master/Rules.md#force-try) [![SwiftLint: force_unwrapping](https://img.shields.io/badge/SwiftLint-force__unwrapping-007A87.svg)](https://github.com/realm/SwiftLint/blob/master/Rules.md#force-unwrapping)
 
   <details>
@@ -987,6 +1046,7 @@ _You can enable the following settings in Xcode by running [this script](resourc
 
   </details>
 
+<!-- TODO: Lint? -->
 * <a id='final-classes-by-default'></a>(<a href='#final-classes-by-default'>link</a>) **Default classes to `final`.**
 
   <details>
@@ -1093,37 +1153,6 @@ _You can enable the following settings in Xcode by running [this script](resourc
 
   </details>
 
-  _Exception: `@testable import` should be grouped after the regular import and separated by an empty line._
-
-  <details>
-
-  ```swift
-  // WRONG
-
-  //  Copyright © 2018 Airbnb. All rights reserved.
-  //
-
-  import DLSPrimitives
-  @testable import Epoxy
-  import Foundation
-  import Nimble
-  import Quick
-
-  //RIGHT
-
-  //  Copyright © 2018 Airbnb. All rights reserved.
-  //
-
-  import DLSPrimitives
-  import Foundation
-  import Nimble
-  import Quick
-
-  @testable import Epoxy
-  ```
-
-  </details>
-
 * <a id='limit-vertical-whitespace'></a>(<a href='#limit-vertical-whitespace'>link</a>) **Limit empty vertical whitespace to one line.** Favor the following formatting guidelines over whitespace of varying heights to divide files into logical groupings. [![SwiftLint: vertical_whitespace](https://img.shields.io/badge/SwiftLint-vertical__whitespace-007A87.svg)](https://github.com/realm/SwiftLint/blob/master/Rules.md#vertical-whitespace)
 
 * <a id='newline-at-eof'></a>(<a href='#newline-at-eof'>link</a>) **Files should end in a newline.** [![SwiftLint: trailing_newline](https://img.shields.io/badge/SwiftLint-trailing__newline-007A87.svg)](https://github.com/realm/SwiftLint/blob/master/Rules.md#trailing-newline)
@@ -1132,7 +1161,9 @@ _You can enable the following settings in Xcode by running [this script](resourc
 
 ## Objective-C Interoperability
 
-* <a id='prefer-pure-swift-classes'></a>(<a href='#prefer-pure-swift-classes'>link</a>) **Prefer pure Swift classes over subclasses of NSObject.** If your code needs to be used by some Objective-C code, wrap it to expose the desired functionality. Use `@objc` on individual methods and variables as necessary rather than exposing all API on a class to Objective-C via `@objcMembers`.
+* <a id='prefer-pure-swift-classes'></a>(<a href='#prefer-pure-swift-classes'>link</a>) **Prefer pure Swift classes over subclasses of NSObject.**  If your code needs to be used by some Objective-C code, wrap it to expose the desired functionality.
+
+* <a id='prefer-objc-extensions'></a>(<a href='#prefer-objc-extensions'>link</a>) **Prefer Obj-C Conformance in Swift extensions for exposing multiple functions.** Try to group these functions by type and separate each extension with a `// MARK: -`.
 
   <details>
 
@@ -1154,14 +1185,50 @@ _You can enable the following settings in Xcode by running [this script](resourc
     }
   }
   ```
+  
+  ```swift
+  class PriceBreakdownViewController {
+
+    private let acceptButton = UIButton()
+    private let declineButton = UIButton()
+    private let cancelButton = UIButton()
+
+    private func setUpAcceptButton() {
+      acceptButton.addTarget(
+        self,
+        action: #selector(didTapAcceptButton),
+        forControlEvents: .TouchUpInside
+      )
+      declineButton.addTarget(
+        self,
+        action: #selector(didTapDeclineButton),
+        forControlEvents: .TouchUpInside
+      )
+      cancelButton.addTarget(
+        self,
+        action: #selector(didTapCancelButton),
+        forControlEvents: .TouchUpInside
+      )
+    }
+  }
+
+  @objc
+  private extension PriceBreakdownViewController {
+    func didTapAcceptButton() {
+      // ...
+    }
+    
+    func didTapDeclineButton() {
+      // ...
+    }
+    
+    func didTapCancelButton() {
+      // ...
+    }
+  }
+  ```
 
   </details>
-
-**[⬆ back to top](#table-of-contents)**
-
-## Contributors
-
-  - [View Contributors](https://github.com/airbnb/swift/graphs/contributors)
 
 **[⬆ back to top](#table-of-contents)**
 
